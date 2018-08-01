@@ -53,7 +53,7 @@ class EnsemblRelease(Genome):
     @classmethod
     def cached(
             cls,
-            species,
+            species=None,
             release=MAX_ENSEMBL_RELEASE,
             server=ENSEMBL_FTP_SERVER):
         """
@@ -69,11 +69,12 @@ class EnsemblRelease(Genome):
 
     def __init__(
             self,
-            species,
+            species=None,
             release=MAX_ENSEMBL_RELEASE,
             server=ENSEMBL_FTP_SERVER):
-        self.release, self.species, self.server = self.normalize_init_values(
-            release=release, species=species, server=server)
+        # self.release, self.species, self.server = self.normalize_init_values(
+        #     release=release, species=species, server=server)
+        self.release, self.species, self.server = release, species,server
 
         self.gtf_url = make_gtf_url(
             ensembl_release=self.release,

@@ -146,9 +146,10 @@ def normalize_species_name(name):
 
 
 def find_species_by_name(species_name):
+    # for (species, release) in Species.all_species_release_pairs():
+    #     print(species, release)
     latin_name = normalize_species_name(species_name)
     if latin_name not in Species._latin_names_to_species:
-
         raise ValueError("Species not found: %s" % species_name)
     return Species._latin_names_to_species[latin_name]
 
@@ -176,7 +177,7 @@ def collect_all_genomes():
     It would be relatively easy to code export and import for such a file.
     """
 
-    def str2num(s,cat=False,force=False):
+    def str2num(s,cat=False,force=True):
         """
         Converts string to integer
         eg. ensembl92 to 92
@@ -200,7 +201,7 @@ def collect_all_genomes():
                 return n
 
     from glob import glob
-    from os.path import dirname,basename
+    from os.path import dirname,basename,exists
     import numpy as np
     import pandas as pd
     from pyensembl.species import normalize_species_name,Species
@@ -221,8 +222,9 @@ def collect_all_genomes():
         releases=[basename(p) for p in glob(f"{pyensembl_cache_dir}/{assembly}/*")]
         for release in releases:
             releasei=str2num(release) #FIXME is realease is a float
-            genome_files=glob(f"{pyensembl_cache_dir}/{assembly}/{release}/*")
-            is_genome_installed=True if len(genome_files)>4 else False #FIXME if more than 4 (.gz) files are downloaded per genome
+            genome_dir=f"{pyensembl_cache_dir}/{assembly}/{release}"
+            genome_files=glob(f"{genome_dir}/*")
+            is_genome_installed=True if len(genome_files)>0 else False #FIXME need more than 4 (.gz) files to be strict
             if is_genome_installed:
                 dspecies.loc[genomei,'assembly']=assembly
                 dspecies.loc[genomei,'release']=releasei
@@ -240,5 +242,16 @@ def collect_all_genomes():
         synonyms=dspecies.loc[(dspecies['latin name']==spc),'synonymn'].unique().tolist(),
         reference_assemblies=assembly2releases)
     return Species
-collect_all_genomes()
+Species=collect_all_genomes()
+
+# from .species import normalize_species_name,collect_all_genomes
+# Species=collect_all_genomes()
+# Species.register(
+#         latin_name=normalize_species_name(args.species),
+#         synonyms=[args.species],
+#         reference_assemblies={
+#         args.annotation_name: (args.reference_name, args.annotation_version),
+#         })                
+# for (species, release) in Species.all_species_release_pairs():
+#     print(species, release)
 # end of a PR (#207) from @rraadd88 

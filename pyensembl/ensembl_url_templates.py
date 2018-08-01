@@ -86,8 +86,8 @@ def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
-    ensembl_release, species, _ = \
-        normalize_release_properties(ensembl_release, species)
+    # ensembl_release, species, _ = \
+    #     normalize_release_properties(ensembl_release, species)
     subdir = _species_subdir(
         ensembl_release,
         species=species,
