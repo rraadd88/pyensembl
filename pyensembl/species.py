@@ -50,11 +50,11 @@ class Species(Serializable):
                     cls._common_names_to_species[synonym]))
             cls._common_names_to_species[synonym] = species
         for reference_name in reference_assemblies:
-            if reference_name in cls._reference_names_to_species:
-                raise ValueError("Can't use reference '%s' for both %s and %s" % (
-                    reference_name,
-                    species,
-                    cls._reference_names_to_species[reference_name]))
+            # if reference_name in cls._reference_names_to_species:
+            #     raise ValueError("Can't use reference '%s' for both %s and %s" % (
+            #         reference_name,
+            #         species,
+            #         cls._reference_names_to_species[reference_name]))
             cls._reference_names_to_species[reference_name] = species
         return species
 
