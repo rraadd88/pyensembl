@@ -20,7 +20,7 @@ from weakref import WeakValueDictionary
 
 from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
-from .species import check_species_object, human
+from .species import check_species_object
 
 from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
@@ -53,8 +53,8 @@ class EnsemblRelease(Genome):
     @classmethod
     def cached(
             cls,
+            species,
             release=MAX_ENSEMBL_RELEASE,
-            species=human,
             server=ENSEMBL_FTP_SERVER):
         """
         Construct EnsemblRelease if it's never been made before, otherwise
@@ -69,8 +69,8 @@ class EnsemblRelease(Genome):
 
     def __init__(
             self,
+            species,
             release=MAX_ENSEMBL_RELEASE,
-            species=human,
             server=ENSEMBL_FTP_SERVER):
         self.release, self.species, self.server = self.normalize_init_values(
             release=release, species=species, server=server)
@@ -145,7 +145,7 @@ class EnsemblRelease(Genome):
         return cls.cached(**state_dict)
 
 
-def cached_release(release, species="human"):
+def cached_release(release, species):
     """
     Create an EnsemblRelease instance only if it's hasn't already been made,
     otherwise returns the old instance.

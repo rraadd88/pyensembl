@@ -24,9 +24,9 @@ from .genome import Genome
 from .gene import Gene
 from .locus import Locus
 from .reference_name import (
-    ensembl_grch36,
-    ensembl_grch37,
-    ensembl_grch38,
+    # ensembl_grch36,
+    # ensembl_grch37,
+    # ensembl_grch38,
     normalize_reference_name,
     find_species_by_reference,
     which_reference,

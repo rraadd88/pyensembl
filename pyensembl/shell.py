@@ -146,8 +146,8 @@ parser.add_argument(
         "all files other than the original GTF and FASTA files for a genome. "
         "\"list\" will show you all installed Ensembl genomes."))
 
-
 def collect_all_installed_ensembl_releases():
+    Species=collect_all_genomes()
     genomes = []
     for (species, release) in Species.all_species_release_pairs():
         genome = EnsemblRelease(release, species=species)

@@ -148,6 +148,7 @@ def normalize_species_name(name):
 def find_species_by_name(species_name):
     latin_name = normalize_species_name(species_name)
     if latin_name not in Species._latin_names_to_species:
+
         raise ValueError("Species not found: %s" % species_name)
     return Species._latin_names_to_species[latin_name]
 
@@ -164,46 +165,80 @@ def check_species_object(species_name_or_object):
         raise ValueError("Unexpected type for species: %s : %s" % (
             species_name_or_object, type(species_name_or_object)))
 
-human = Species.register(
-    latin_name="homo_sapiens",
-    synonyms=["human"],
-    reference_assemblies={
-        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-        "GRCh37": (55, 75),
-        "NCBI36": (54, 54),
-    })
+# start of a PR (#207) from @rraadd88 
+def collect_all_genomes():
+    """
+    data aware generation of Species object.
+    searches in .cache dir and generates a Species object
 
-mouse = Species.register(
-    latin_name="mus_musculus",
-    synonyms=["mouse", "house mouse"],
-    reference_assemblies={
-        "NCBIM37": (54, 67),
-        "GRCm38": (68, MAX_ENSEMBL_RELEASE),
+    Also generates a tsv file with all the genome info.
+    Such file can be used to install sets of genomes at once (logic is bit like conda environment profile).
+    It would be relatively easy to code export and import for such a file.
+    """
 
-    })
+    def str2num(s,cat=False,force=False):
+        """
+        Converts string to integer
+        eg. ensembl92 to 92
 
-dog = Species.register(
-    latin_name="canis_familiaris",
-    synonyms=["dog"],
-    reference_assemblies={"CanFam3.1": (75, MAX_ENSEMBL_RELEASE)})
+        :param s: string
+        :param cat: Whether to concatenate detected integers. eg. 20,23 to 2023
+        :param force: If True, ignores decimal point error. 
+        """
+        import re    
+        if '.' in s and not force:
+            raise ValueError(f"A string can only be converted to integeres, found a '.' in {s}")
+        n=re.findall(r'\d+',s)
+        if len(n)==0:
+            raise ValueError(f"No digits found in string {s}")        
+        elif len(n)==1:
+            return int(n[0])
+        else:
+            if cat:
+                return int(''.join(n))
+            else:
+                return n
 
-cat = Species.register(
-    latin_name="felis_catus",
-    synonyms=["cat"],
-    reference_assemblies={"Felis_catus_6.2": (75, MAX_ENSEMBL_RELEASE)})
+    from glob import glob
+    from os.path import dirname,basename
+    import numpy as np
+    import pandas as pd
+    from pyensembl.species import normalize_species_name,Species
+            
+    # here's how I get the .cache directory eg. '/home/user/.cache/pyensembl'
+    import datacache
+    pyensembl_cache_dir=f"{dirname(datacache.get_data_dir())}/pyensembl" #FIXME if genomes are installed at other places than .cache
 
-chicken = Species.register(
-    latin_name="gallus_gallus",
-    synonyms=["chicken"],
-    reference_assemblies={
-        "Galgal4": (75, 85),
-        "Gallus_gallus-5.0": (86, MAX_ENSEMBL_RELEASE)})
-
-# Does the black rat (Rattus Rattus) get used for research too?
-brown_rat = Species.register(
-    latin_name="rattus_norvegicus",
-    synonyms=["brown rat", "lab rat", "rat"],
-    reference_assemblies={
-        "Rnor_5.0": (75, 79),
-        "Rnor_6.0": (80, MAX_ENSEMBL_RELEASE),
-    })
+    # all the assemblies
+    assemblies=[basename(p) for p in glob(f"{pyensembl_cache_dir}/*")]
+    # dataframe that contains all the info (and can be exported as a tsv).
+    dspecies=pd.DataFrame(columns=['latin name','release','synonymn','assembly'])
+    # assempy to release min max dict needed as an input to create Species object
+    assembly2releasesminmax={}
+    # following loop populates the dataframe 
+    genomei=0
+    for assembly in assemblies:
+        releases=[basename(p) for p in glob(f"{pyensembl_cache_dir}/{assembly}/*")]
+        for release in releases:
+            releasei=str2num(release) #FIXME is realease is a float
+            genome_files=glob(f"{pyensembl_cache_dir}/{assembly}/{release}/*")
+            is_genome_installed=True if len(genome_files)>4 else False #FIXME if more than 4 (.gz) files are downloaded per genome
+            if is_genome_installed:
+                dspecies.loc[genomei,'assembly']=assembly
+                dspecies.loc[genomei,'release']=releasei
+                dspecies.loc[genomei,'synonymn']=basename(genome_files[0]).split('.')[0]
+                dspecies.loc[genomei,'latin name']=normalize_species_name(dspecies.loc[genomei,'synonymn'])
+                genomei+=1
+    # following loop generates the Species object
+    for spc in dspecies['latin name'].unique():
+        assembly2releases={}
+        for assembly in dspecies.loc[(dspecies['latin name']==spc),'assembly'].unique():
+            d=dspecies.loc[((dspecies['latin name']==spc) & (dspecies['assembly']==assembly)),:]
+            assembly2releases[assembly]=d['release'].min(),d['release'].max() #FIXME if MAX_ENSEMBL_RELEASE very important and has to be used
+        Species.register(
+        latin_name=spc,
+        synonyms=dspecies.loc[(dspecies['latin name']==spc),'synonymn'].unique().tolist(),
+        reference_assemblies=assembly2releases)
+    return Species
+collect_all_genomes()
+# end of a PR (#207) from @rraadd88 
