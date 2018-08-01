@@ -66,16 +66,24 @@ class Species(Serializable):
         return list(cls._latin_names_to_species.keys())
 
     @classmethod
+    def all_registered_assemblies(cls):
+        """
+        Returns latin name of every registered species.
+        """
+        return list(cls._reference_names_to_species.keys())
+
+    @classmethod
     def all_species_release_pairs(cls):
         """
         Generator which yields (species, release) pairs
         for all possible combinations.
         """
-        for species_name in cls.all_registered_latin_names():
-            species = cls._latin_names_to_species[species_name]
-            for _, release_range in species.reference_assemblies.items():
-                for release in range(release_range[0], release_range[1] + 1):
-                    yield species_name, release
+        for assembly in cls.all_registered_assemblies():
+            for species_name in cls.all_registered_latin_names():
+                species = cls._latin_names_to_species[species_name]
+                for _, release_range in species.reference_assemblies.items():
+                    for release in range(release_range[0], release_range[1] + 1):
+                        yield species_name, release,assembly
 
     def __init__(self, latin_name, synonyms=[], reference_assemblies={}):
         """
@@ -224,7 +232,7 @@ def collect_all_genomes():
             releasei=str2num(release) #FIXME is realease is a float
             genome_dir=f"{pyensembl_cache_dir}/{assembly}/{release}"
             genome_files=glob(f"{genome_dir}/*")
-            is_genome_installed=True if len(genome_files)>0 else False #FIXME need more than 4 (.gz) files to be strict
+            is_genome_installed=True if len(genome_files)>4 else False #FIXME need more than 4 (.gz) files to be strict
             if is_genome_installed:
                 dspecies.loc[genomei,'assembly']=assembly
                 dspecies.loc[genomei,'release']=releasei
@@ -241,6 +249,7 @@ def collect_all_genomes():
         latin_name=spc,
         synonyms=dspecies.loc[(dspecies['latin name']==spc),'synonymn'].unique().tolist(),
         reference_assemblies=assembly2releases)
+        Species.dspecies=dspecies
     return Species
 Species=collect_all_genomes()
 

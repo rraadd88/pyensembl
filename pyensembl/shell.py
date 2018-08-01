@@ -145,13 +145,35 @@ parser.add_argument(
         "all files other than the original GTF and FASTA files for a genome. "
         "\"list\" will show you all installed Ensembl genomes."))
 
-def collect_all_installed_ensembl_releases():
-    genomes = []
-    for (species, release) in Species.all_species_release_pairs():
-        genome = EnsemblRelease(release, species=species)
-        if genome.required_local_files_exist():
-            genomes.append(genome)
-    return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
+# def collect_all_installed_ensembl_releases():
+#     # genomes = []
+#     import pandas as pd
+#     # dataframe that contains all the info (and can be exported as a tsv).
+#     dspecies=pd.DataFrame(columns=['latin name','release','synonymn','assembly'])  
+#     genomei=0  
+#     for (species, release,assembly) in Species.all_species_release_pairs():
+#         dspecies.loc[genomei,'assembly']=assembly
+#         dspecies.loc[genomei,'release']=release
+#         dspecies.loc[genomei,'synonymn']=species
+#         dspecies.loc[genomei,'latin name']=species
+#         genomei+=1
+#     return dspecies
+    #     species_obj=Species.register(
+    #     latin_name=species,
+    #     synonyms=[species],
+    #     reference_assemblies={
+    #         assembly: (release, release),
+    #     })            
+    # species_obj = Species.register(
+    #     latin_name="saccharomyces_cerevisiae",
+    #     synonyms=["yeast"],
+    #     reference_assemblies={
+    #         "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
+    #     })        
+    # genome = EnsemblRelease(species=species_obj,release=release)
+    # if genome.required_local_files_exist():
+    #     genomes.append(genome)
+    # return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
 
 
 # def all_combinations_of_ensembl_genomes(args):
@@ -236,38 +258,16 @@ def get_ensembl_genome_object(args):
     """
     species = args.species[0]  
     version = args.release[0] if args.release else [MAX_ENSEMBL_RELEASE]
-    ensembl_release = EnsemblRelease(species=species,release=version)
+    assembly=args.reference_name
+    species_obj=Species.register(
+    latin_name=species,
+    synonyms=[species],
+    reference_assemblies={
+        assembly: (version, version),
+    })
+    ensembl_release = EnsemblRelease(species=species_obj,release=version)
     if not args.custom_mirror:
-        genomes.append(ensembl_release)
-    else:
-        # if we're using a custom mirror then we expect the provided
-        # URL to be a directory with all the same filenames as
-        # would be provided by Ensembl
-        gtf_url = os.path.join(
-            args.custom_mirror,
-            os.path.basename(ensembl_release.gtf_url))
-        transcript_fasta_urls = [
-            os.path.join(
-                args.custom_mirror,
-                os.path.basename(transcript_fasta_url))
-            for transcript_fasta_url in ensembl_release.transcript_fasta_urls
-        ]
-        protein_fasta_urls = [
-            os.path.join(
-                args.custom_mirror,
-                os.path.basename(protein_fasta_url))
-            for protein_fasta_url in
-            ensembl_release.protein_fasta_urls
-        ]
-        reference_name = ensembl_release.reference_name
-        genome = Genome(
-            reference_name=reference_name,
-            annotation_name="ensembl",
-            annotation_version=version,
-            gtf_path_or_url=gtf_url,
-            transcript_fasta_paths_or_urls=transcript_fasta_urls,
-            protein_fasta_paths_or_urls=protein_fasta_urls)
-    return genome
+        return ensembl_release
 
 def args2genome(args):
     # AKA collect_selected_genome (no 's')
@@ -317,22 +317,23 @@ def get_genome_files(args):
 
 def run():
     args = parser.parse_args()
-    if args.species:
-        species = args.species[0]  
-    else: 
-        raise ValueError(f"Species argument provided is {args.species}")    
     if args.action == "list":
         # TODO: how do we also identify which non-Ensembl genomes are
         # installed?
-        genomes = collect_all_installed_ensembl_releases()
-        for genome in genomes:
-            # print every directory in which downloaded files are located
-            # in most case this will be only one directory
-            filepaths = genome.required_local_files()
-            directories = {os.path.split(path)[0] for path in filepaths}
-            print("-- %s: %s" % (genome, ", ".join(directories)))
+        # dspecies = collect_all_installed_ensembl_releases()
+        print(Species.dspecies)
+        # for genome in genomes:
+        #     # print every directory in which downloaded files are located
+        #     # in most case this will be only one directory
+        #     filepaths = genome.required_local_files()
+        #     directories = {os.path.split(path)[0] for path in filepaths}
+        #     print("-- %s: %s" % (genome, ", ".join(directories)))
     else:
         if args.action in actions:
+            if args.species:
+                species = args.species[0]  
+            else: 
+                raise ValueError(f"Species argument provided is {args.species}")    
             logger.info("Running '%s' for %s", args.action, args.species)
             genome_files,genome_=get_genome_files(args)
             if len(genome_files)>1:
@@ -344,9 +345,9 @@ def run():
             else:
                 from os import makedirs
                 from os.path import dirname
-                makedirs(dirname(genome_),exist_ok=True)
-                open(genome_, 'w').close()
-                print(genome_)
+                # makedirs(dirname(genome_),exist_ok=True)
+                # open(genome_, 'w').close()
+                # print(genome_)
                 genome = args2genome(args)
                 # except:
                 if args.action == "install":   

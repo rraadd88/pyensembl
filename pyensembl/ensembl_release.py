@@ -78,7 +78,7 @@ class EnsemblRelease(Genome):
 
         self.gtf_url = make_gtf_url(
             ensembl_release=self.release,
-            species=self.species,
+            species=self.species.latin_name,
             server=self.server)
 
         self.transcript_fasta_urls = [
