@@ -43,11 +43,11 @@ class Species(Serializable):
             reference_assemblies=reference_assemblies)
         cls._latin_names_to_species[species.latin_name] = species
         for synonym in synonyms:
-            if synonym in cls._common_names_to_species:
-                raise ValueError("Can't use synonym '%s' for both %s and %s" % (
-                    synonym,
-                    species,
-                    cls._common_names_to_species[synonym]))
+            # if synonym in cls._common_names_to_species:
+            #     raise ValueError("Can't use synonym '%s' for both %s and %s" % (
+            #         synonym,
+            #         species,
+            #         cls._common_names_to_species[synonym]))
             cls._common_names_to_species[synonym] = species
         for reference_name in reference_assemblies:
             # if reference_name in cls._reference_names_to_species:
@@ -199,7 +199,7 @@ def collect_all_genomes():
             raise ValueError(f"A string can only be converted to integeres, found a '.' in {s}")
         n=re.findall(r'\d+',s)
         if len(n)==0:
-            raise ValueError(f"No digits found in string {s}")        
+            raise ValueError("No digits found in string {}".format(s))        
         elif len(n)==1:
             return int(n[0])
         else:
