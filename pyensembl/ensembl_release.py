@@ -41,7 +41,6 @@ def get_dtype2url(name,release,test=False):
     dtype2url={}
     for dtype in dtype2subd:
         subd=dtype2subd[dtype]
-        release=93
         ext=f'/pub/release-{int(release)}/{subd}'
         if test:
             print(ext)
@@ -51,16 +50,19 @@ def get_dtype2url(name,release,test=False):
         elif subd.startswith('fasta'):
             file_fmt='fa'        
         fns=[p for p in ftp.nlst() if p.endswith(f'.{file_fmt}.gz') and (not 'abinitio' in p) and (not 'patch' in p) and (not 'scaff' in p)]
+        fns=[fn for fn in fns if not '.chr.' in fn]
         if len(fns)>1:
-            logging.warning('two files instead of one found')
-        else:
-            url=f"ftp://{host}{ext}{fns[0]}"
+            logging.warning(f'two files instead of one found for {dtype}')
             if test:
-                print(url)
-            dtype2url[dtype]=url
-    #         print(f'wget {dlp} -O pub --no-verbose --passive-ftp -T 3600')
+                print(fns)                
+        url=f"ftp://{host}{ext}{fns[0]}"
+        if test:
+            print(url)
+        dtype2url[dtype]=url
+#         print(f'wget {dlp} -O pub --no-verbose --passive-ftp -T 3600')
+    if test:
+        print(dtype2url)
     return dtype2url
-
 
 class EnsemblRelease(Genome):
     """
