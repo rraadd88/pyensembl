@@ -367,6 +367,8 @@ class Genome(Serializable):
         Add every missing file to the install string shown to the user
         in an error message.
         """
+        if isinstance(self.annotation_name,list):
+            self.annotation_name=self.annotation_name[0]
         args = [
             "--reference-name", self.reference_name,
             "--annotation-name", self.annotation_name]
@@ -383,6 +385,7 @@ class Genome(Serializable):
             args += [
                 "--transcript-fasta \"%s\"" %
                 path for path in self._transcript_fasta_paths_or_urls]
+        print(args)
         return "pyensembl install %s" % " ".join(args)
 
     def __str__(self):

@@ -28,6 +28,39 @@ from .ensembl_url_templates import (
     make_fasta_url
 )
 
+def get_dtype2url(name,release,test=False):
+    import ftplib
+    host='ftp.ensembl.org'
+    ftp=ftplib.FTP(host,user='anonymous', passwd='anonymous')
+    dtype=['gtf','cdna','ncrna','pep']
+    subds=[f'gtf/{name}/',
+            f'fasta/{name}/cdna/',
+            f'fasta/{name}/ncrna/',
+            f'fasta/{name}/pep/']
+    dtype2subd=dict(zip(dtype,subds))
+    dtype2url={}
+    for dtype in dtype2subd:
+        subd=dtype2subd[dtype]
+        release=93
+        ext=f'/pub/release-{int(release)}/{subd}'
+        if test:
+            print(ext)
+        ftp.cwd(ext)
+        if subd.startswith('gtf'):
+            file_fmt='gtf'
+        elif subd.startswith('fasta'):
+            file_fmt='fa'        
+        fns=[p for p in ftp.nlst() if p.endswith(f'.{file_fmt}.gz') and (not 'abinitio' in p) and (not 'patch' in p) and (not 'scaff' in p)]
+        if len(fns)>1:
+            logging.warning('two files instead of one found')
+        else:
+            url=f"ftp://{host}{ext}{fns[0]}"
+            if test:
+                print(url)
+            dtype2url[dtype]=url
+    #         print(f'wget {dlp} -O pub --no-verbose --passive-ftp -T 3600')
+    return dtype2url
+
 
 class EnsemblRelease(Genome):
     """
@@ -76,33 +109,36 @@ class EnsemblRelease(Genome):
         #     release=release, species=species, server=server)
         self.release, self.species, self.server = release, species,server
 
-        self.gtf_url = make_gtf_url(
-            ensembl_release=self.release,
-            species=self.species.latin_name,
-            server=self.server)
+        dtype2url=get_dtype2url(name=species.latin_name,release=release,test=True)        
+#         self.gtf_url = make_gtf_url(
+#             ensembl_release=self.release,
+#             species=self.species.latin_name,
+#             server=self.server)
 
-        self.transcript_fasta_urls = [
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species.latin_name,
-                sequence_type="cdna",
-                server=server),
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species.latin_name,
-                sequence_type="ncrna",
-                server=server)
-        ]
+#         self.transcript_fasta_urls = [
+#             make_fasta_url(
+#                 ensembl_release=self.release,
+#                 species=self.species.latin_name,
+#                 sequence_type="cdna",
+#                 server=server),
+#             make_fasta_url(
+#                 ensembl_release=self.release,
+#                 species=self.species.latin_name,
+#                 sequence_type="ncrna",
+#                 server=server)
+#         ]
 
-        self.protein_fasta_urls = [
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species.latin_name,
-                sequence_type="pep",
-                server=self.server)]
+#         self.protein_fasta_urls = [
+#             make_fasta_url(
+#                 ensembl_release=self.release,
+#                 species=self.species.latin_name,
+#                 sequence_type="pep",
+#                 server=self.server)]
 
         self.reference_name = self.species.which_reference(self.release)
-
+        self.gtf_url = dtype2url['gtf']
+        self.transcript_fasta_urls = [dtype2url['cdna'],dtype2url['ncrna']]
+        self.protein_fasta_urls = [dtype2url['pep']]
         Genome.__init__(
             self,
             reference_name=self.reference_name,

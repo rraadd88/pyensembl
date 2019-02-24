@@ -220,6 +220,9 @@ class DownloadCache(object):
                 full_path=cached_path,
                 download_url=url,
                 timeout=3600)
+#             import subprocess
+#             com=f'wget {url} -O cached_path --no-verbose --passive-ftp -T 3600'
+#             subprocess.call(com,shell=True)
         elif missing:
             raise MissingRemoteFile(url)
         return cached_path

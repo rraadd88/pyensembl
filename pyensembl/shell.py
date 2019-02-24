@@ -126,6 +126,13 @@ path_group.add_argument(
     help="URL or local path to a FASTA file containing protein data.")
 
 path_group.add_argument(
+    "--annotation_name",
+    type=str,
+    default=[],
+    action="append",
+    help="assembly name?.")
+
+path_group.add_argument(
     "--shared-prefix",
     default="",
     help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta")
