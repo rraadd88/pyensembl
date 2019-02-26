@@ -110,9 +110,12 @@ class EnsemblRelease(Genome):
         # self.release, self.species, self.server = self.normalize_init_values(
         #     release=release, species=species, server=server)
         self.release, self.species, self.server = release, species,server
-
-        dtype2url=get_dtype2url(name=species.latin_name,release=release,
-                                test=False)        
+        try:
+            dtype2url=get_dtype2url(name=species.latin_name,release=release,
+                                    test=False)        
+        except:
+            dtype2url=get_dtype2url(name=species.latin_name,release=release,
+                                    test=False)            
 #         self.gtf_url = make_gtf_url(
 #             ensembl_release=self.release,
 #             species=self.species.latin_name,
