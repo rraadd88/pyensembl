@@ -63,6 +63,11 @@ parser.add_argument(
     action="store_true",
     help="Force download and indexing even if files already exist locally")
 
+parser.add_argument(
+    "--test",
+    default=False,
+    action="store_true",
+    help="skip ftp connection")
 
 root_group = parser.add_mutually_exclusive_group()
 
