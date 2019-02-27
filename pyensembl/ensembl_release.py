@@ -111,20 +111,6 @@ class EnsemblRelease(Genome):
         #     release=release, species=species, server=server)
         self.release, self.species, self.server = release, species,server
         try:
-            # my way
-            try:
-                dtype2url=get_dtype2url(name=species.latin_name,release=release,
-                                        test=False) 
-                
-            except:
-                # if transient connection problem
-                dtype2url=get_dtype2url(name=species.latin_name,release=release,
-                                        test=False)            
-
-            self.gtf_url = dtype2url['gtf']
-            self.transcript_fasta_urls = [dtype2url['cdna'],dtype2url['ncrna']]
-            self.protein_fasta_urls = [dtype2url['pep']]
-        except:
             # pyensembl way
             logging.info('can not use ftp to download genome')
             self.gtf_url = make_gtf_url(
@@ -151,6 +137,20 @@ class EnsemblRelease(Genome):
                     species=self.species.latin_name,
                     sequence_type="pep",
                     server=self.server)]
+        except:
+            # my way
+            try:
+                dtype2url=get_dtype2url(name=species.latin_name,release=release,
+                                        test=False) 
+                
+            except:
+                # if transient connection problem
+                dtype2url=get_dtype2url(name=species.latin_name,release=release,
+                                        test=False)            
+
+            self.gtf_url = dtype2url['gtf']
+            self.transcript_fasta_urls = [dtype2url['cdna'],dtype2url['ncrna']]
+            self.protein_fasta_urls = [dtype2url['pep']]
         #common    
         self.reference_name = self.species.which_reference(self.release)
         
