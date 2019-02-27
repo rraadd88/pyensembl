@@ -112,7 +112,6 @@ class EnsemblRelease(Genome):
         self.release, self.species, self.server = release, species,server
         try:
             # pyensembl way
-            logging.info('can not use ftp to download genome')
             self.gtf_url = make_gtf_url(
                 ensembl_release=self.release,
                 species=self.species.latin_name,
@@ -139,6 +138,7 @@ class EnsemblRelease(Genome):
                     server=self.server)]
         except:
             # my way
+            logging.info('using ftplib to download genome')
             try:
                 dtype2url=get_dtype2url(name=species.latin_name,release=release,
                                         test=False) 
